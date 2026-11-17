@@ -1,0 +1,26 @@
+[project]
+name = "qlm3d"
+version = "0.1.0"
+description = "Reference SSE quantum Monte Carlo for the 3+1D U(1) quantum link model on the cubic lattice"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["numpy>=2.0"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = ["slow: chains on the 4x4x4 lattice (about two minutes)"]
+addopts = "-m 'not slow'"
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.basedpyright]
+extraPaths = ["src"]
