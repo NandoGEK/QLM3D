@@ -1,0 +1,12 @@
+# Fonts and sizes that match the text of the thesis.
+font.family: serif
+font.serif: Libertinus Serif, New Computer Modern, DejaVu Serif
+mathtext.fontset: stix
+font.size: 10
+axes.labelsize: 10
+axes.titlesize: 10
+legend.fontsize: 8.5
+xtick.labelsize: 9
+ytick.labelsize: 9
+savefig.dpi: 300
+pdf.fonttype: 42

@@ -28,11 +28,13 @@ FRACTIONS = np.arange(9) / 16
 
 
 def new_chain():
+    """A chain without charges and flux on 2x2x2 before its first sweep."""
     lat = Cubic(2)
     return SSE(lat, 0.5, start_state(lat, "g", 2), seed=2)
 
 
 def swept_chain():
+    """The chain of new_chain after 20 sweeps at beta = 2."""
     sse = new_chain()
     for _ in range(20):
         sse.sweep(2.0)
@@ -41,10 +43,7 @@ def swept_chain():
 
 def put(sse, *ops):
     """Make the string these operators followed by empty slots."""
-    sse.ops = [EMPTY] * sse.M
-    for x, op in enumerate(ops):
-        sse.ops[x] = op
-    sse.n = len(ops)
+    sse.ops = list(ops) + [EMPTY] * (sse.M - len(ops))
 
 
 # ---------------------------------------------------------------- a configuration
@@ -96,8 +95,12 @@ def test_mode_between_operators():
 
 
 def test_autocorrelation():
-    assert autocorrelation(np.array([2j, 2j, 2j])).tolist() == [4.0, 4.0, 4.0]
-    assert autocorrelation(np.array([1, -1, 1, -1])).tolist() == [1.0, -1.0, 1.0, -1.0]
+    assert np.allclose(autocorrelation(np.array([2j, 2j, 2j])), [4.0, 4.0, 4.0])
+    assert np.allclose(autocorrelation(np.array([1, -1, 1, -1])), [1.0, -1.0, 1.0, -1.0])
+    # against the sum over the string, one distance at a time
+    mode = np.random.RandomState(1).randn(37) + 1j * np.random.RandomState(2).randn(37)
+    direct = [np.mean(np.roll(mode, -m) * np.conj(mode)).real for m in range(len(mode))]
+    assert np.allclose(autocorrelation(mode), direct)
 
 
 def test_correlator_at():
@@ -109,8 +112,9 @@ def test_correlator_at():
 
 
 def test_binomial():
-    assert binomial(4, 2, 0.5) == pytest.approx(6 / 16)
-    assert sum(binomial(10, m, 0.3) for m in range(11)) == pytest.approx(1.0)
+    assert binomial(4, 0.5) == pytest.approx(np.array([1, 4, 6, 4, 1]) / 16)
+    assert binomial(10, 0.3).sum() == pytest.approx(1.0)
+    assert binomial(100000, 0.25).sum() == pytest.approx(1.0)  # no overflow for a long string
 
 
 # ---------------------------------------------------------------- the layer winding

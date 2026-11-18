@@ -165,7 +165,7 @@ def jobs(path):
 # ---------------------------------------------------------------- check
 
 
-def check(n_chains=8, n_sweeps=20000, n_burn=2000, workers=8, lams=(-0.5, 0.0, 0.5)):
+def check(n_chains=64, n_sweeps=20000, n_burn=2000, workers=8, lams=(-0.5, 0.0, 0.5)):
     """Compare SSE with exact diagonalisation on 2x2x2 and return the largest deviation in sigma."""
     lat = Cubic(2)
     worst = 0.0
@@ -221,7 +221,7 @@ def main(args):
     listing.add_argument("file")
 
     checking = commands.add_parser("check", help="compare with exact diagonalisation on 2x2x2")
-    checking.add_argument("--n_chains", type=int, default=8)
+    checking.add_argument("--n_chains", type=int, default=64)
     checking.add_argument("--n_sweeps", type=int, default=20000)
     checking.add_argument("--n_burn", type=int, default=2000)
     checking.add_argument("--workers", type=int, default=8)

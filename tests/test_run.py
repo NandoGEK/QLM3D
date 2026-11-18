@@ -29,6 +29,7 @@ FULL_KEYS = {"energy", "nflip", "f0", "f1", "f2", "Q2", "Q4", "ReQ3", "Ipos"}
 
 
 def without_time(row):
+    """A row without its run time, which differs from run to run."""
     return {key: value for key, value in row.items() if key != "seconds"}
 
 
@@ -64,15 +65,31 @@ def test_run_chain(start, observables, bin_keys, has_field):
     json.dumps(row)  # a row can be stored as JSON
 
 
+def assert_same_row(row, expected):
+    """The same chain: integers and texts equal, measured numbers equal up to rounding."""
+    # Sums of floating-point numbers come out differently in the last digits on another processor.
+    assert row.keys() == expected.keys()
+    for key in expected:
+        if key == "bins":
+            assert len(row["bins"]) == len(expected["bins"])
+            for measured, stored in zip(row["bins"], expected["bins"], strict=True):
+                assert measured.keys() == stored.keys()
+                for name in stored:
+                    assert measured[name] == pytest.approx(stored[name], rel=1e-9, abs=1e-12), name
+        elif key == "field":
+            assert row[key] == pytest.approx(expected[key], abs=1e-9)
+        else:
+            assert row[key] == expected[key], key
+
+
 @pytest.mark.parametrize("row", [r for r in GOLDEN["rows"] if r["L"] == 2], ids=job_of)
 def test_run_chain_reference_values(row):
-    assert without_time(run_chain(*job_of(row))) == row
+    assert_same_row(without_time(run_chain(*job_of(row))), row)
 
 
-@pytest.mark.slow
 @pytest.mark.parametrize("row", [r for r in GOLDEN["rows"] if r["L"] > 2], ids=job_of)
 def test_run_chain_4x4x4_reference_values(row):
-    assert without_time(run_chain(*job_of(row))) == row
+    assert_same_row(without_time(run_chain(*job_of(row))), row)
 
 
 def test_sector():

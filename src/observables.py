@@ -1,10 +1,6 @@
 """Measurements on a configuration (order parameter) and on a string (photon correlator)."""
 
-import math
-
 import numpy as np
-
-from sse import IDENTITY
 
 W3 = np.exp(2j * np.pi / 3)  # third root of unity in the order parameter Q = f0 + W3 f1 + W3^2 f2
 STATE_KEYS = ("nflip", "f0", "f1", "f2", "Q2", "Q4", "ReQ3")  # what state_observables returns
@@ -52,18 +48,14 @@ def photon_correlator(sse, w, fractions):
 
 def mode_between_operators(sse, w):
     """The mode O on the state entering each operator of the string."""
-    mode = []
-    s = sse.state
-    for t, p in sse.ops:
-        if t != IDENTITY:
-            mode.append(np.sum(w * s))
-            s = sse.apply(s, t, p)
-    return np.array(mode)
+    return sse.mode(w)
 
 
 def autocorrelation(mode):
     """The mean of O[i + m] O[i]^* over the string, for every operator distance m."""
-    return np.array([np.mean(np.roll(mode, -m) * np.conj(mode)).real for m in range(len(mode))])
+    # By a Fourier transform: the sum over i for all m at once, instead of one sum per m.
+    transformed = np.fft.fft(mode)
+    return np.real(np.fft.ifft(transformed * np.conj(transformed))) / len(mode)
 
 
 def correlator_at(by_distance, fraction):
@@ -71,22 +63,23 @@ def correlator_at(by_distance, fraction):
     n = len(by_distance)
     if fraction == 0.0:
         return by_distance[0]
-    total = 0.0
-    for m in range(n + 1):
-        total += binomial(n, m, fraction) * by_distance[m % n]
-    return total
+    weights = binomial(n, fraction)
+    # The distance m = n is the distance 0: the string is periodic.
+    return float(weights[:n] @ by_distance + weights[n] * by_distance[0])
 
 
-def binomial(n, m, f):
-    """The probability that m of n operators lie in a fraction f of imaginary time."""
+def binomial(n, f):
+    """For m = 0 ... n the probability that m of n operators lie in a fraction f of imaginary time."""
+    m = np.arange(n + 1)
+    log_factorial = np.concatenate([[0.0], np.cumsum(np.log(np.arange(1, n + 1)))])
     log_probability = (
-        math.lgamma(n + 1.0)
-        - math.lgamma(m + 1.0)
-        - math.lgamma(n - m + 1.0)
-        + m * math.log(f)
-        + (n - m) * math.log(1.0 - f)
+        log_factorial[n]
+        - log_factorial[m]
+        - log_factorial[n - m]
+        + m * np.log(f)
+        + (n - m) * np.log(1.0 - f)
     )
-    return math.exp(log_probability)
+    return np.exp(log_probability)
 
 
 # ---------------------------------------------------------------- the layer winding

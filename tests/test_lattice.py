@@ -14,6 +14,7 @@ GOLDEN = json.loads((Path(__file__).parent / "golden.json").read_text())
 
 @pytest.fixture
 def lat():
+    """A 4x4x4 lattice."""
     return Cubic(4)
 
 
